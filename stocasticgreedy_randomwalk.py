@@ -358,7 +358,7 @@ def main(argv):
         exit(0)
 
     # read only one popcenter specified by cellnum from popcenterlist
-    with open(POPCENTERLIST, 'r') as p:
+    with open(CENTERLIST, 'r') as p:
         popcenterlist = p.readlines()
     (disW, disN, weight) = popcenterlist[cellnum].strip('\n').split(',')
     print disW, disN, weight
