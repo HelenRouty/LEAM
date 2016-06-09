@@ -26,8 +26,8 @@ RESIDENTIALMIN = 21
 RESIDENTIALMAX = 22
 COMMERCIALMIN =  23
 COMMERCIALMAX = 24
-ATTRBASKETNUM = 10
-COSTBASEKTNUM = 10
+ATTRBASKETNUM = 50
+COSTBASKETNUM = 10
 ATTRBASE = 3817
 COSTBASE = 999
 ATTRFREQ_COM = "./Data/attrfreq-commericial.png"
@@ -88,7 +88,7 @@ def plotgraph(xsize, y, outfile, name, mapname):
     ax.grid(which='major', alpha=0.5)
 
     # set the range of the y axis
-    plt.ylim(0, 1)
+    plt.ylim(0, 0.2)
     # set the title and labels
     plt.title(name +' ' + mapname + ' Frequency Distribution')
     plt.xlabel(mapname + ' Score')
@@ -119,8 +119,8 @@ def plotgraph_attr(x, y, xsize, outfile, name, mapname):
         major_ticks = xrange(0, x[-1]+2000, 2000)
         minor_ticks = xrange(0, x[-1]+2000, 1000)
     else:
-        major_ticks = xrange(0, x[-1]+10, 10)
-        minor_ticks = xrange(0, x[-1]+10, 1)
+        major_ticks = xrange(0, x[-2]+10, 10)
+        minor_ticks = xrange(0, x[-2]+10, 1)
     ax.set_xticks(major_ticks)
     ax.set_xticks(minor_ticks, minor=True)
     ax.grid(which='minor', alpha=0.2)
@@ -221,6 +221,7 @@ def main():
     attrmap        = pd.read_csv(ATTRMAP, sep=r"\s+", skiprows=6, header=None)
     try:
         travelcostmap  = pd.read_csv(TRCOSTMAP, sep=r"\s+", skiprows=6, header=None)
+        travelcostmap  = travelcostmap.round().astype(np.int)
     except IOError:
         print "Error: No travelcostmap found. You need to use -g as argument to genearte travelcostmap."
         exit(1)
@@ -229,49 +230,116 @@ def main():
     mask_res       = (landuse_arr >= RESIDENTIALMIN)& (landuse_arr <= RESIDENTIALMAX)
     mask_com       = (landuse_arr >= COMMERCIALMIN) & (landuse_arr <= COMMERCIALMAX)
 
-    attr_arr       = attrmap.values.flatten()
-    attr_res_arr   = attr_arr[mask_res]
-    attr_com_arr   = attr_arr[mask_com]
+    #attr_arr       = attrmap.values.flatten()
+    #attr_res_arr   = attr_arr[mask_res]
+    #attr_res_arr   = attr_arr[mask_com]
+    #attr_com_arr   = attr_arr[mask_com]
     cost_arr       = travelcostmap.values.flatten()
-    cost_res_arr   = cost_arr[mask_res]
+    #cost_res_arr   = cost_arr[mask_res]
+    cost_res_arr   = cost_arr[mask_com]
     cost_com_arr   = cost_arr[mask_com]
+
+
+    # # find one x axis (quantile or equal interval) for attr_arr, attr_res_arr, attr_com_arr
+    # # note that, about 63.5% attrmap cells have base value, so we do not consider base value cells
+    # # when finding x axis for quantile. We will set attrbase as the first x tick.
+    # attr_arr_nobase    = attr_arr[attr_arr > ATTRBASE]
+    # print "NUM CELLS CONSIDERED: ", len(attr_arr_nobase) 
+    # attr_arr_nblen     = len(attr_arr_nobase)
+    # attrbasketsize     = attr_arr_nblen/ATTRBASKETNUM
+    # attr_arr_nbsort    = np.sort(attr_arr_nobase)
+    # attr_arr_x         = attr_arr_nbsort[0:attr_arr_nblen-1:attrbasketsize] # the x axis tick values 
+    # attr_arr_x         = np.concatenate(([ATTRBASE], attr_arr_x.tolist()))  # need add one basket for base value
+    # attr_arr_x         = attr_arr_x[0:ATTRBASKETNUM+1]                      # merge the last basket to the previous one
+    # print "---------------------attr_arr_x----------------\n", attr_arr_x
+    # attrbasketsize_1st = len(attr_arr[attr_arr == ATTRBASE])
+    # attrbasketsize_last= attr_arr_nblen%ATTRBASKETNUM
+
+    # attr_res_arr_nobase     = attr_res_arr[attr_res_arr > ATTRBASE]
+    # print "NUM RES CELLS CONSIDERED: ", len(attr_res_arr_nobase) 
+    # attr_res_arr_nbsort     = np.sort(attr_res_arr_nobase)
+    # attr_res_basketsize_1st = len(attr_res_arr[attr_res_arr == ATTRBASE])
+    # attr_res_freq = [attr_res_basketsize_1st]
+    # attr_arr_freq = [attrbasketsize_1st]
+    # cur1 = attr_arr_x[1]
+    # for i in xrange(2, ATTRBASKETNUM+1): #i is for cur2. in total ATTRBASKETNUM baskets.
+    #     cur2 = attr_arr_x[i]
+    #     mask = (attr_res_arr >= cur1) & (attr_res_arr < cur2)
+    #     attr_res_freq = np.append(attr_res_freq, len(attr_res_arr[mask]))
+    #     mask = (attr_arr >= cur1) & (attr_arr < cur2)
+    #     attr_arr_freq = np.append(attr_arr_freq, len(attr_arr[mask]))
+    #     cur1 = cur2
+    # attr_res_freq = np.append(attr_res_freq, len(attr_res_arr[attr_res_arr >= cur1]))
+    # attr_arr_freq = np.append(attr_arr_freq, len(attr_arr[attr_arr >= cur1]))
+    
+
+    # print "---------------------attr_com_freq----------------\n",attr_res_freq.astype(np.int)
+    # print "---------------------attr_arr_freq----------------\n",attr_arr_freq.astype(np.int)
+    # attr_res_y = np.divide(attr_res_freq*1.0, attr_arr_freq)
+    # attr_res_y = np.nan_to_num(attr_res_y)
+    # print "---------------------attr_com_y----------------\n",attr_res_y
+    # print len(attr_res_y)
+    # #plotgraph_attr(attr_arr_x, attr_res_y, ATTRBASKETNUM, ATTRFREQ_RES, RES, ATT)
+    # plotgraph_attr(attr_arr_x, attr_res_y, ATTRBASKETNUM, ATTRFREQ_COM, COM, ATT)
+    # # np.savetxt(ATTRFREQ_RES[:-4]+"-"+str(ATTRBASKETNUM)+".txt", 
+    # #               np.asarray([attr_arr_x, attr_res_freq, attr_arr_freq, attr_res_y]), 
+    # #               fmt='%5.5f',delimiter=',')
+    # np.savetxt(ATTRFREQ_COM[:-4]+"-"+str(ATTRBASKETNUM)+".txt", 
+    #               np.asarray([attr_arr_x, attr_res_freq, attr_arr_freq, attr_res_y]), 
+    #               fmt='%5.5f',delimiter=',')
+    
 
 
     # find one x axis (quantile or equal interval) for attr_arr, attr_res_arr, attr_com_arr
     # note that, about 63.5% attrmap cells have base value, so we do not consider base value cells
     # when finding x axis for quantile. We will set attrbase as the first x tick.
-    attr_arr_nobase    = attr_arr[attr_arr > ATTRBASE] 
-    attr_arr_nblen     = len(attr_arr_nobase)
-    attrbasketsize     = attr_arr_nblen/ATTRBASKETNUM
-    attr_arr_nbsort    = np.sort(attr_arr_nobase)
-    attr_arr_x         = attr_arr_nbsort[0:attr_arr_nblen-1:attrbasketsize] # the x axis tick values 
-    attr_arr_x         = np.concatenate(([ATTRBASE], attr_arr_x.tolist()))  # need add one basket for base value
-    attr_arr_x         = attr_arr_x[0:ATTRBASKETNUM+1]                      # merge the last basket to the previous one
-    attrbasketsize_1st = len(attr_arr[attr_arr == ATTRBASE])
-    attrbasketsize_last= attr_arr_nblen%ATTRBASKETNUM
-    attrbasketsize_nths= np.full((1, ATTRBASKETNUM), attrbasketsize,dtype=np.int)
-    attr_arr_freq      = np.insert(attrbasketsize_nths, 0, attrbasketsize_1st)
-    attr_arr_freq[ATTRBASKETNUM] += attrbasketsize_last                     # in total ATTRBASKETNUM baskets
-
-    attr_res_arr_nobase     = attr_res_arr[attr_res_arr > ATTRBASE]
-    attr_res_arr_nbsort     = np.sort(attr_res_arr_nobase)
-    attr_res_basketsize_1st = len(attr_res_arr[attr_res_arr == ATTRBASE])
-    attr_res_freq = []
-    attr_res_freq = np.append(attr_res_freq, attr_res_basketsize_1st)
-    cur1 = attr_arr_x[1]
-    count = 0
-    for i in xrange(2, ATTRBASKETNUM+1): #i is for cur2. in total ATTRBASKETNUM baskets.
-        cur2 = attr_arr_x[i]
-        mask = (attr_res_arr >= cur1) & (attr_res_arr < cur2)
-        attr_res_freq = np.append(attr_res_freq, len(attr_res_arr[mask]))
-        cur1 = cur2
-        count+=1
-    attr_res_freq = np.append(attr_res_freq, len(attr_res_arr[attr_res_arr >= cur1]))
+    cost_arr_nobase    = cost_arr[cost_arr < COSTBASE]
+    print "NUM CELLS CONSIDERED: ", len(cost_arr_nobase)
+    cost_arr_nblen     = len(cost_arr_nobase)
+    costbasketsize     = cost_arr_nblen/COSTBASKETNUM
+    cost_arr_nbsort    = np.sort(cost_arr_nobase)
+    cost_arr_x         = cost_arr_nbsort[0:cost_arr_nblen-1:costbasketsize] # the x axis tick values 
+    cost_arr_x         = cost_arr_x[:-1]                                    # merge the last basket to the previous one
+    print "---------------------cost_arr_x----------------\n",cost_arr_x
     
-    attr_res_y = np.divide(attr_res_freq, attr_arr_freq)
-    attr_res_y = np.nan_to_num(attr_res_y)
-    plotgraph_attr(attr_arr_x, attr_res_y, ATTRBASKETNUM, ATTRFREQ_RES, RES, ATT)
-    # plotgraph_attr(attr_arr_x, attr_res_y, ATTRBASKETNUM, ATTRFREQ_COM, COM, ATT)
+    costbasketsize_last= len(cost_arr[cost_arr == COSTBASE])
+    costbasketsize_rest= cost_arr_nblen%COSTBASKETNUM
+    costbasketsize_nths= np.full((1, COSTBASKETNUM), costbasketsize,dtype=np.int)
+
+    cost_res_arr_nobase      = cost_res_arr[cost_res_arr < COSTBASE]
+    print "NUM RES CELLS CONSIDERED: ", len(cost_res_arr_nobase)
+    cost_res_arr_nbsort      = np.sort(cost_res_arr_nobase)
+    cost_res_basketsize_last = len(cost_res_arr[cost_res_arr == COSTBASE])
+    cost_res_freq = []
+    cost_arr_freq    = []
+    cur1 = cost_arr_x[0]
+    for i in xrange(1, COSTBASKETNUM): #i is for cur2. in total ATTRBASKETNUM baskets.
+        cur2 = cost_arr_x[i]
+        mask = (cost_res_arr >= cur1) & (cost_res_arr < cur2)
+        cost_res_freq = np.append(cost_res_freq, len(cost_res_arr[mask]))
+        mask = (cost_arr >= cur1) & (cost_arr < cur2)
+        cost_arr_freq = np.append(cost_arr_freq, len(cost_arr[mask]))
+        cur1 = cur2
+    mask = (cost_res_arr >= cur1) & (cost_res_arr < COSTBASE)
+    cost_res_freq = np.append(cost_res_freq, len(cost_res_arr[mask]))
+    mask = (cost_arr >= cur1) & (cost_arr < COSTBASE)
+    cost_arr_freq    = np.append(cost_arr_freq, len(cost_arr[mask]))
+
+
+    print "---------------------cost_res_freq----------------\n",cost_res_freq.astype(np.int)
+    print "---------------------cost_arr_freq----------------\n",cost_arr_freq.astype(np.int)
+    cost_res_y = np.divide(cost_res_freq, cost_arr_freq)
+    cost_res_y = np.nan_to_num(cost_res_y)
+    cost_res_y[cost_res_y > 100] = 100
+    print "---------------------cost_res_y----------------\n",cost_res_y
+    #plotgraph_attr(cost_arr_x, cost_res_y, COSTBASKETNUM, COSTFREQ_RES, RES, CST)
+    plotgraph_attr(cost_arr_x, cost_res_y, COSTBASKETNUM, COSTFREQ_COM, COM, CST)
+    # np.savetxt(COSTFREQ_RES[:-4]+"-"+str(COSTBASKETNUM)+".txt", 
+    #               np.asarray([cost_arr_x, cost_res_freq, cost_arr_freq, cost_res_y]), 
+    #               fmt='%5.5f',delimiter=',')
+    np.savetxt(COSTFREQ_COM[:-4]+"-"+str(COSTBASKETNUM)+".txt", 
+                  np.asarray([cost_arr_x, cost_res_freq, cost_arr_freq, cost_res_y]), 
+                  fmt='%5.5f',delimiter=',')
 
 
 if __name__ == "__main__":
