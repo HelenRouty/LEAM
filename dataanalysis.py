@@ -36,12 +36,12 @@ ATT = "Attractiveness"
 CST = "Travelcost"
 
 # for gettravelcostmap
-ISEMP = 1
+ISEMP = 0
 if ISEMP == 1:
     CENTERLIST = "./Data/empcenterlist.txt"
     ATTRMAP = "./Data/attrmap-emp-interpolated.txt"
     TRAVELCOSTPATH = "./Data/costmaps-emp"
-    TRCOSTMAP = "./Data/costmap-emp.txt"
+    TRCOSTMAP = "./Data/costmap-emp-interpolated.txt"
     ATTRFREQ_COM = "./Data/analysis/emp/attrfreq-commericial.png"
     ATTRFREQ_RES = "./Data/analysis/emp/attrfreq-residential.png"
     COSTFREQ_COM = "./Data/analysis/emp/trcostfreq-commercial.png"
@@ -50,7 +50,7 @@ else:
     CENTERLIST = "./Data/popcenterlist.txt"
     ATTRMAP = "./Data/attrmap-pop-interpolated.txt"
     TRAVELCOSTPATH = "./Data/costmaps"
-    TRCOSTMAP = "./Data/costmap-pop.txt"
+    TRCOSTMAP = "./Data/costmap-pop-interpolated.txt"
     ATTRFREQ_COM = "./Data/analysis/pop/attrfreq-commericial.png"
     ATTRFREQ_RES = "./Data/analysis/pop/attrfreq-residential.png"
     COSTFREQ_COM = "./Data/analysis/pop/trcostfreq-commercial.png"
@@ -78,8 +78,8 @@ def plotgraph(x, y, xsize, outfile, name, mapname):
         major_ticks = xrange(0, x[-1]+2000, 2000)
         minor_ticks = xrange(0, x[-1]+2000, 500)
     else:
-        major_ticks = xrange(0, x[-2]+10, 10)
-        minor_ticks = xrange(0, x[-2]+10, 1)
+        major_ticks = xrange(0, x[-2]+10, 100)
+        minor_ticks = xrange(0, x[-2]+10, 10)
     ax.set_xticks(major_ticks)
     ax.set_xticks(minor_ticks, minor=True)
     ax.grid(which='minor', alpha=0.2)
@@ -219,7 +219,7 @@ def main():
         print "finish generating travelcostmap."
 
     start = time.time()
-    
+
     try:
         travelcostmap  = pd.read_csv(TRCOSTMAP, sep=r"\s+", skiprows=6, header=None)
         travelcostmap  = travelcostmap.round().astype(np.int)
