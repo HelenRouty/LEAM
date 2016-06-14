@@ -9,6 +9,7 @@ import time
 from numpy import maximum
 from pandas import DataFrame
 from pprint import pprint
+from Utils import createdirectorynotexist
 
 """
 This script will do:
@@ -51,17 +52,17 @@ DIRSIDEP = 0.12                         #possibiltiy to go to the two directions
 DIROPP = 1-(DIRP+2*DIRNEARP+2*DIRSIDEP) #possibility to go to the other directions. e.g. S, SW, and SE #this should not be set to 0
 
 
-def createdirectorynotexist(fname):
-    """Create a directory if the directory does not exist.
-       @param: fname is the full file path name
-       @reference:[http://stackoverflow.com/questions/12517451/python-automatically-creating-directories-with-file-output]
-    """
-    if not os.path.exists(os.path.dirname(fname)):
-        try:
-            os.makedirs(os.path.dirname(fname))
-        except OSError as exc: #Guard against race condition
-            if exc.errno != errno.EEXIST:
-                raise
+# def createdirectorynotexist(fname):
+#     """Create a directory if the directory does not exist.
+#        @param: fname is the full file path name
+#        @reference:[http://stackoverflow.com/questions/12517451/python-automatically-creating-directories-with-file-output]
+#     """
+#     if not os.path.exists(os.path.dirname(fname)):
+#         try:
+#             os.makedirs(os.path.dirname(fname))
+#         except OSError as exc: #Guard against race condition
+#             if exc.errno != errno.EEXIST:
+#                 raise
 
 def min(x, y):
     if math.isnan(x):

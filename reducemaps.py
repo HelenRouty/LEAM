@@ -11,6 +11,8 @@ from pprint import pprint
 import multiprocessing
 import thread
 
+from Utils import extractheader, outfilename
+
 """
 This script will do:
 1) convert costmap for each pop/emp center into attractive map
@@ -36,11 +38,11 @@ TRAVELCOSTMAP = "travelcostmap.txt"
 HEADER = "./Input/arcGISheader.txt"
 
 
-def outfilename(cellx, celly, path, fname, dirname, count):
-    """Modify filename "file.txt" to be "cell0_0/Data/file_0_0_SE1.txt" for starting cell (0,0) on the first 2hrs run.
-    """
-    return path + "/cell" + "_" + str(cellx) + "_" + str(celly) + "/" + fname[:-4] \
-                         + "_" + str(cellx) +"_" + str(celly) + "_" +dirname + str(count) + ".txt"
+# def outfilename(cellx, celly, path, fname, dirname, count):
+#     """Modify filename "file.txt" to be "cell0_0/Data/file_0_0_SE1.txt" for starting cell (0,0) on the first 2hrs run.
+#     """
+#     return path + "/cell" + "_" + str(cellx) + "_" + str(celly) + "/" + fname[:-4] \
+#                          + "_" + str(cellx) +"_" + str(celly) + "_" +dirname + str(count) + ".txt"
                         
 def costmap2attrmap(costmap):
     try:
@@ -54,10 +56,10 @@ def costmap2attrmap(costmap):
     #pprint(attmatrix)
     return attmatrix
 
-def extractheader(header):
-    with open(header, 'r') as h:
-        header = h.read()
-    return header
+# def extractheader(header):
+#     with open(header, 'r') as h:
+#         header = h.read()
+#     return header
     
 def main():
     speedmap = pd.read_csv(SPEEDMAP, skiprows=6, header=None, sep=r"\s+")

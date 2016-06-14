@@ -4,6 +4,8 @@ import time
 from scipy.interpolate import griddata
 from multiprocessing.dummy import Pool
 
+from Utils import extractheader
+
 """
 Time consumption for 64 threads and 1 repeattime: 12min
 Time consumption for 64 threads and 2 repeattime: 24min
@@ -13,20 +15,25 @@ Time consumption for no thread  and 1 repeattime with landuse type considered: 4
 
 #INPUT="testmap1"
 #OUTPUT="testmapout"
-INPUT="./Data/attrmap-pop.txt"
-OUTPUT="./Data/attrmap-pop-interpolated.txt"
+ISEMP = 1
+if ISEMP == 0:
+    INPUT="./Data/attrmap-pop.txt"
+    OUTPUT="./Data/attrmap-pop-interpolated.txt"
+else:
+    INPUT="./Data/attrmap-emp.txt"
+    OUTPUT="./Data/attrmap-emp-interpolated.txt" 
 HEADER="./Input/arcGISheader.txt"
 WEIGHTMAP = "./Input/weightmap.txt"
 DIRPROBMAP = "./Data/dirprobmap.txt"
 DIRPROBMAX = 200
 #THREADNUM = 32
-REPEATNUM = 3
+REPEATNUM = 5
 
 
-def extractheader(headermap):
-    with open(headermap, 'r') as h:
-        header = h.read()
-    return header
+# def extractheader(headermap):
+#     with open(headermap, 'r') as h:
+#         header = h.read()
+#     return header
 #global value header
 header = extractheader(HEADER)
 

@@ -48,5 +48,9 @@ python smoothcost.py
         #a distance to the center cell in the 5*5 cell is a weight parameter multilying to the
         #cell value and a penalty for each landuse type is exerted using the values in dirprobmap.txt
 
+python dataanlysis.py
+        #set ATTRBASKET and COSTBASKET for quantile analysis(normally 10, 20, or 50). The results are stored in
+        #./Data/analysis  
+
 
 

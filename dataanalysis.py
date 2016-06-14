@@ -18,7 +18,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from optparse import OptionParser
-from reducemaps import extractheader, outfilename
+from Utils import createdirectorynotexist, extractheader, outfilename
 import time 
 
 LANDUSEMAP = "./Data/landuse.txt"
@@ -30,27 +30,31 @@ ATTRBASKETNUM = 50
 COSTBASKETNUM = 10
 ATTRBASE = 3817
 COSTBASE = 999
-ATTRFREQ_COM = "./Data/attrfreq-commericial.png"
-ATTRFREQ_RES = "./Data/attrfreq-residential.png"
-COSTFREQ_COM = "./Data/trcostfreq-commercial.png"
-COSTFREQ_RES = "./Data/trcostfreq-residential.png"
 RES = "Residential"
 COM = "Commercial"
 ATT = "Attractiveness"
 CST = "Travelcost"
 
 # for gettravelcostmap
-ISEMP = 0
+ISEMP = 1
 if ISEMP == 1:
     CENTERLIST = "./Data/empcenterlist.txt"
     ATTRMAP = "./Data/attrmap-emp-interpolated.txt"
     TRAVELCOSTPATH = "./Data/costmaps-emp"
     TRCOSTMAP = "./Data/costmap-emp.txt"
+    ATTRFREQ_COM = "./Data/analysis/emp/attrfreq-commericial.png"
+    ATTRFREQ_RES = "./Data/analysis/emp/attrfreq-residential.png"
+    COSTFREQ_COM = "./Data/analysis/emp/trcostfreq-commercial.png"
+    COSTFREQ_RES = "./Data/analysis/emp/trcostfreq-residential.png"
 else:
     CENTERLIST = "./Data/popcenterlist.txt"
     ATTRMAP = "./Data/attrmap-pop-interpolated.txt"
     TRAVELCOSTPATH = "./Data/costmaps"
     TRCOSTMAP = "./Data/costmap-pop.txt"
+    ATTRFREQ_COM = "./Data/analysis/pop/attrfreq-commericial.png"
+    ATTRFREQ_RES = "./Data/analysis/pop/attrfreq-residential.png"
+    COSTFREQ_COM = "./Data/analysis/pop/trcostfreq-commercial.png"
+    COSTFREQ_RES = "./Data/analysis/pop/trcostfreq-residential.png"
 TRAVELCOSTMAP = "travelcostmap.txt"
 HEADER = "./Input/arcGISheader.txt"
 
@@ -65,9 +69,6 @@ def to_percent(y, position):
         return s + r'$\%$'
     else:
         return s + '%'
-
-def add_base(x, position):
-    return str(x+20)
 
 def plotgraph(x, y, xsize, outfile, name, mapname):
     plt.close("all")
@@ -130,10 +131,12 @@ def frequencyanalysis_attr(attr_res_arr, attr_arr, attr_arr_x, attrbasketsize_1s
     attr_res_y = np.divide(attr_res_freq*1.0, attr_arr_freq)
     attr_res_y = np.nan_to_num(attr_res_y)
     print "---------------------attr_com_y----------------\n",attr_res_y
-    plotgraph(attr_arr_x, attr_res_y, ATTRBASKETNUM, ATTRFREQ, RESCOM, ATT)
-    np.savetxt(ATTRFREQ[:-4]+"-"+str(ATTRBASKETNUM)+".txt", 
-                  np.asarray([attr_arr_x, attr_res_freq, attr_arr_freq, attr_res_y]), 
-                  fmt='%5.5f',delimiter=',')
+    outgraphfname = ATTRFREQ[:-4]+"-"+str(ATTRBASKETNUM)+".png"
+    outdatafname = ATTRFREQ[:-4]+"-"+str(ATTRBASKETNUM)+".txt"
+    createdirectorynotexist(outgraphfname)
+    plotgraph(attr_arr_x, attr_res_y, ATTRBASKETNUM, outgraphfname, RESCOM, ATT)
+    np.savetxt(outdatafname, np.asarray([attr_arr_x, attr_res_freq, attr_arr_freq, attr_res_y]), 
+                                                                        fmt='%5.5f',delimiter=',')
 
 def frequencyanalysis_cost(cost_res_arr, cost_arr, cost_arr_x, RESCOM, COSTFREQ, 
                                               CST=CST, COSTBASKETNUM=COSTBASKETNUM, COSTBASE=COSTBASE):
@@ -201,6 +204,9 @@ def gettravelcostmap(nrows, ncols):
     return trcostdf
 
 def main():
+    landusemap     = pd.read_csv(LANDUSEMAP, sep=r"\s+", skiprows=6, header=None)
+    attrmap        = pd.read_csv(ATTRMAP, sep=r"\s+", skiprows=6, header=None)
+
 
     parser = OptionParser()
     parser.add_option("-g", "--gentravelcost", default=False, action="store_true",
@@ -213,9 +219,7 @@ def main():
         print "finish generating travelcostmap."
 
     start = time.time()
-
-    landusemap     = pd.read_csv(LANDUSEMAP, sep=r"\s+", skiprows=6, header=None)
-    attrmap        = pd.read_csv(ATTRMAP, sep=r"\s+", skiprows=6, header=None)
+    
     try:
         travelcostmap  = pd.read_csv(TRCOSTMAP, sep=r"\s+", skiprows=6, header=None)
         travelcostmap  = travelcostmap.round().astype(np.int)
