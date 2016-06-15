@@ -12,6 +12,7 @@ This script will do:
 """
 
 #from ggplot import * #ggplot is best to be used with pandas DataFrames
+import sys
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -26,8 +27,8 @@ RESIDENTIALMIN = 21
 RESIDENTIALMAX = 22
 COMMERCIALMIN =  23
 COMMERCIALMAX = 24
-ATTRBASKETNUM = 10
-COSTBASKETNUM = 10
+ATTRBASKETNUM = int(sys.argv[1])
+COSTBASKETNUM = int(sys.argv[1])
 ATTRBASE = 3817
 COSTMAX = 999
 COSTBASE = 20
@@ -37,7 +38,7 @@ ATT = "Attractiveness"
 CST = "Travelcost"
 
 # for gettravelcostmap
-ISEMP = 1
+ISEMP = 0
 if ISEMP == 1:
     CENTERLIST = "./Data/empcenterlist.txt"
     ATTRMAP = "./Data/attrmap-emp-interpolated.txt"
@@ -133,11 +134,13 @@ def frequencyanalysis_attr(attr_res_arr, attr_arr, attr_arr_x, attrbasketsize_1s
     attr_res_y = np.nan_to_num(attr_res_y)
     print "---------------------attr_com_y----------------\n",attr_res_y
     outgraphfname = ATTRFREQ[:-4]+"-"+str(ATTRBASKETNUM)+".png"
-    outdatafname = ATTRFREQ[:-4]+"-"+str(ATTRBASKETNUM)+".txt"
+    outdatafname = ATTRFREQ[:-4]+"-"+str(ATTRBASKETNUM)+".csv"
     createdirectorynotexist(outgraphfname)
     plotgraph(attr_arr_x, attr_res_y, ATTRBASKETNUM, outgraphfname, RESCOM, ATT)
-    np.savetxt(outdatafname, np.asarray([attr_arr_x, attr_res_freq, attr_arr_freq, attr_res_y]), 
-                                                                        fmt='%5.5f',delimiter=',')
+    outdata_arr = np.asarray([attr_arr_x, attr_res_freq, attr_arr_freq, attr_res_y])
+    outdata_arr = np.transpose(outdata_arr)
+    np.savetxt(outdatafname, outdata_arr,fmt='%5.5f',delimiter=',',
+                                         header="x,res/com,original,y", comments='')
 
 def frequencyanalysis_cost(cost_res_arr, cost_arr, cost_arr_x, RESCOM, COSTFREQ, 
                            CST=CST, COSTBASKETNUM=COSTBASKETNUM, COSTMAX=COSTMAX, COSTBASE=COSTBASE):
@@ -171,12 +174,14 @@ def frequencyanalysis_cost(cost_res_arr, cost_arr, cost_arr_x, RESCOM, COSTFREQ,
     cost_res_y[cost_res_y > 100] = 100
     print "---------------------cost_res_y----------------\n",cost_res_y
     outgraphfname = COSTFREQ[:-4]+"-"+str(COSTBASKETNUM)+".png"
-    outdatafname = COSTFREQ[:-4]+"-"+str(COSTBASKETNUM)+".txt"
+    outdatafname = COSTFREQ[:-4]+"-"+str(COSTBASKETNUM)+".csv"
     createdirectorynotexist(outgraphfname)
     plotgraph(cost_arr_x, cost_res_y, COSTBASKETNUM, outgraphfname, RESCOM, CST)
     print outdatafname
-    np.savetxt(outdatafname, np.asarray([cost_arr_x, cost_res_freq, cost_arr_freq, cost_res_y]), 
-                  fmt='%5.5f',delimiter=',')
+    outdata_arr = np.asarray([cost_arr_x, cost_res_freq, cost_arr_freq, cost_res_y])
+    outdata_arr = np.transpose(outdata_arr)
+    np.savetxt(outdatafname, outdata_arr, fmt='%5.5f',delimiter=',', 
+                                          header="x,res/com,original,y", comments='')
 
 
 
