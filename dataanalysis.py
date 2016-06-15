@@ -26,17 +26,18 @@ RESIDENTIALMIN = 21
 RESIDENTIALMAX = 22
 COMMERCIALMIN =  23
 COMMERCIALMAX = 24
-ATTRBASKETNUM = 50
+ATTRBASKETNUM = 10
 COSTBASKETNUM = 10
 ATTRBASE = 3817
-COSTBASE = 999
+COSTMAX = 999
+COSTBASE = 20
 RES = "Residential"
 COM = "Commercial"
 ATT = "Attractiveness"
 CST = "Travelcost"
 
 # for gettravelcostmap
-ISEMP = 0
+ISEMP = 1
 if ISEMP == 1:
     CENTERLIST = "./Data/empcenterlist.txt"
     ATTRMAP = "./Data/attrmap-emp-interpolated.txt"
@@ -75,11 +76,11 @@ def plotgraph(x, y, xsize, outfile, name, mapname):
     fig, ax = plt.subplots()
     # set the grids of the x axis
     if mapname == ATT:
-        major_ticks = xrange(0, x[-1]+2000, 2000)
-        minor_ticks = xrange(0, x[-1]+2000, 500)
+        major_ticks = xrange(0, x[-1]+1000, 1000)
+        minor_ticks = xrange(0, x[-1]+1000, 100)
     else:
-        major_ticks = xrange(0, x[-2]+10, 100)
-        minor_ticks = xrange(0, x[-2]+10, 10)
+        major_ticks = xrange(0, x[-2]+10, 10)
+        minor_ticks = xrange(0, x[-2]+10, 1)
     ax.set_xticks(major_ticks)
     ax.set_xticks(minor_ticks, minor=True)
     ax.grid(which='minor', alpha=0.2)
@@ -139,24 +140,25 @@ def frequencyanalysis_attr(attr_res_arr, attr_arr, attr_arr_x, attrbasketsize_1s
                                                                         fmt='%5.5f',delimiter=',')
 
 def frequencyanalysis_cost(cost_res_arr, cost_arr, cost_arr_x, RESCOM, COSTFREQ, 
-                                              CST=CST, COSTBASKETNUM=COSTBASKETNUM, COSTBASE=COSTBASE):
-    cost_res_arr_nobase      = cost_res_arr[cost_res_arr < COSTBASE]
+                           CST=CST, COSTBASKETNUM=COSTBASKETNUM, COSTMAX=COSTMAX, COSTBASE=COSTBASE):
+    cost_res_arr_nobase      = cost_res_arr[(cost_res_arr < COSTMAX)&(cost_res_arr > COSTBASE)]
     print "NUM RES CELLS CONSIDERED: ", len(cost_res_arr_nobase)
     cost_res_arr_nbsort      = np.sort(cost_res_arr_nobase)
-    cost_res_basketsize_last = len(cost_res_arr[cost_res_arr == COSTBASE])
+    cost_res_basketsize_last = len(cost_res_arr[cost_res_arr == COSTMAX])
     cost_res_freq = []
-    cost_arr_freq    = []
+    cost_arr_freq = []
     cur1 = cost_arr_x[0]
-    for i in xrange(1, COSTBASKETNUM): #i is for cur2. in total ATTRBASKETNUM baskets.
+    xlen = len(cost_arr_x)
+    for i in xrange(1, xlen): #i is for cur2. in total ATTRBASKETNUM baskets.
         cur2 = cost_arr_x[i]
         mask = (cost_res_arr >= cur1) & (cost_res_arr < cur2)
         cost_res_freq = np.append(cost_res_freq, len(cost_res_arr[mask]))
         mask = (cost_arr >= cur1) & (cost_arr < cur2)
         cost_arr_freq = np.append(cost_arr_freq, len(cost_arr[mask]))
         cur1 = cur2
-    mask = (cost_res_arr >= cur1) & (cost_res_arr < COSTBASE)
+    mask = (cost_res_arr >= cur1) & (cost_res_arr < COSTMAX)
     cost_res_freq = np.append(cost_res_freq, len(cost_res_arr[mask]))
-    mask = (cost_arr >= cur1) & (cost_arr < COSTBASE)
+    mask = (cost_arr >= cur1) & (cost_arr < COSTMAX)
     cost_arr_freq = np.append(cost_arr_freq, len(cost_arr[mask]))
     #cost_res_freq = np.append(cost_res_freq, cost_res_basketsize_last)
     #cost_arr_freq = np.append(cost_arr_freq, costbasketsize_last)
@@ -168,45 +170,19 @@ def frequencyanalysis_cost(cost_res_arr, cost_arr, cost_arr_x, RESCOM, COSTFREQ,
     cost_res_y = np.nan_to_num(cost_res_y)
     cost_res_y[cost_res_y > 100] = 100
     print "---------------------cost_res_y----------------\n",cost_res_y
-    plotgraph(cost_arr_x, cost_res_y, COSTBASKETNUM, COSTFREQ, RESCOM, CST)
-    np.savetxt(COSTFREQ[:-4]+"-"+str(COSTBASKETNUM)+".txt", 
-                  np.asarray([cost_arr_x, cost_res_freq, cost_arr_freq, cost_res_y]), 
+    outgraphfname = COSTFREQ[:-4]+"-"+str(COSTBASKETNUM)+".png"
+    outdatafname = COSTFREQ[:-4]+"-"+str(COSTBASKETNUM)+".txt"
+    createdirectorynotexist(outgraphfname)
+    plotgraph(cost_arr_x, cost_res_y, COSTBASKETNUM, outgraphfname, RESCOM, CST)
+    print outdatafname
+    np.savetxt(outdatafname, np.asarray([cost_arr_x, cost_res_freq, cost_arr_freq, cost_res_y]), 
                   fmt='%5.5f',delimiter=',')
 
-def gettravelcostmap(nrows, ncols):
-    """Generate travelcost map by overlapping the 100 pop/emp center travelcost maps
-       and obtain the minimal value of each cell in these 100 maps.
-       This process takes several minutes.
-       @param: nrows is # rows and ncols is # columns of travelcostmaps.
-       @output: the overlapped minimal value travelcostmap
-    """
-    with open(CENTERLIST, 'r') as p:
-        centerlist = p.readlines()
-     
-    trcostdf = pd.DataFrame(index=xrange(nrows), columns=xrange(ncols)) #initialize costmap with nan
-    trcostdf = trcostdf.fillna(999)    #initialize costmap with 999
 
-    for i in range(99):
-        (disW, disN, weight) = centerlist[i].strip('\n').split(',')
-        costmapfile = outfilename(disW, disN, TRAVELCOSTPATH, TRAVELCOSTMAP, "NW", 100)
-        try:
-            newtrcostdf = pd.read_csv(costmapfile, skiprows=6, header=None, sep=r"\s+" ) #skip the 6 header lines
-        except IOError:
-            print "file not found: ", outfilename
-            continue
-        trcostdf = np.minimum(trcostdf, newtrcostdf)
-      
-    header = extractheader(HEADER)
-    with open(TRCOSTMAP, 'w') as w:
-        w.writelines(header)
-    trcostdf.round() # round to integer
-    trcostdf.to_csv(path_or_buf=TRCOSTMAP, sep=' ', index=False, header=False, mode = 'a') # append
-    return trcostdf
 
 def main():
     landusemap     = pd.read_csv(LANDUSEMAP, sep=r"\s+", skiprows=6, header=None)
     attrmap        = pd.read_csv(ATTRMAP, sep=r"\s+", skiprows=6, header=None)
-
 
     parser = OptionParser()
     parser.add_option("-g", "--gentravelcost", default=False, action="store_true",
@@ -224,7 +200,7 @@ def main():
         travelcostmap  = pd.read_csv(TRCOSTMAP, sep=r"\s+", skiprows=6, header=None)
         travelcostmap  = travelcostmap.round().astype(np.int)
     except IOError:
-        print "Error: No travelcostmap found. You need to use -g as argument to genearte travelcostmap."
+        print "Error: No travelcostmap found. You need to use run smoothcost.py to genearte travelcostmap."
         exit(1)
     
     landuse_arr    = landusemap.values.flatten()
@@ -259,17 +235,20 @@ def main():
     # find one x axis (quantile or equal interval) for attr_arr, attr_res_arr, attr_com_arr
     # note that, about 63.5% attrmap cells have base value, so we do not consider base value cells
     # when finding x axis for quantile. We will set attrbase as the first x tick.
-    cost_arr_nobase    = cost_arr[cost_arr < COSTBASE]
+    cost_arr_nobase    = cost_arr[(cost_arr < COSTMAX)&(cost_arr > COSTBASE)]
     print "NUM CELLS CONSIDERED: ", len(cost_arr_nobase)
     cost_arr_nblen     = len(cost_arr_nobase)
     costbasketsize     = cost_arr_nblen/COSTBASKETNUM
     cost_arr_nbsort    = np.sort(cost_arr_nobase)
-    cost_arr_x         = cost_arr_nbsort[0:cost_arr_nblen-1:costbasketsize] # the x axis tick values 
+    cost_arr_x         = cost_arr_nbsort[COSTBASE+1:cost_arr_nblen-1:costbasketsize] # the x axis tick values 
     cost_arr_x         = cost_arr_x[:-1]                                    # merge the last basket to the previous one
-    #cost_arr_x         = np.append(cost_arr_x, COSTBASE)
+    cost_arr_x         = np.insert(cost_arr_x, 0, COSTBASE)
+    cost_arr_x         = np.unique(cost_arr_x)
+   # cost_arr_x         = 
+    #cost_arr_x         = np.append(cost_arr_x, COSTMAX)
     print "---------------------cost_arr_x----------------\n",cost_arr_x
     
-    #costbasketsize_last= len(cost_arr[cost_arr == COSTBASE])
+    #costbasketsize_last= len(cost_arr[cost_arr == COSTMAX])
     #costbasketsize_rest= cost_arr_nblen%COSTBASKETNUM
     #costbasketsize_nths= np.full((1, COSTBASKETNUM), costbasketsize,dtype=np.int)
 
