@@ -9,7 +9,7 @@ import time
 from numpy import maximum
 from pandas import DataFrame
 from pprint import pprint
-from Utils import createdirectorynotexist
+from Utils import createdirectorynotexist, outfilename, extractheader
 
 """
 This script will do:
@@ -31,10 +31,10 @@ FASTNOLOG = 1
 ISEMP = 1
 
 if (ISEMP == 1):
-    TRAVELCOSTPATH = "./Data/costmaps"
+    TRAVELCOSTPATH = "./Data/costmaps-emp"
     CENTERLIST="./Data/empcenterlist.txt"
 else:
-    TRAVELCOSTPATH = "./Data/costmaps"
+    TRAVELCOSTPATH = "./Data/costmaps-pop"
     CENTERLIST="./Data/popcenterlist.txt"
 
 SPEEDMAP = "./Data/speedmap.txt"
@@ -50,7 +50,6 @@ DIRP = 0.3                              #possibility to go to pre-selected direc
 DIRNEARP = 0.2                          #possibiltiy to go to the two directions near the selected e.g.NW and NE
 DIRSIDEP = 0.12                         #possibiltiy to go to the two directions at 90 degree difference e.g.W and E
 DIROPP = 1-(DIRP+2*DIRNEARP+2*DIRSIDEP) #possibility to go to the other directions. e.g. S, SW, and SE #this should not be set to 0
-
 
 # def createdirectorynotexist(fname):
 #     """Create a directory if the directory does not exist.
@@ -107,7 +106,7 @@ class RandomWalk():
         self.ymax = self.distancetuple[1]
         self.maxcost=maxcost
         self.cellsize=cellsize
-        self.outfileheader = self.extractheader(HEADER)
+        self.outfileheader = extractheader(HEADER)
         
         #initiliaze parameters
         self.costmap = pd.DataFrame(index=range(self.xmax), columns=range(self.ymax)) #initialize costmap with nan
@@ -137,7 +136,7 @@ class RandomWalk():
         self.walkeachdirection("NW",travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP)
         self.costmap[self.costmap < 20] = 20
         if FASTNOLOG == 1:
-            outcostfilename = self.outfilename(travelcostpath, travelcostmap, "NW", 100)
+            outcostfilename = outfilename(travelcostpath, travelcostmap, "NW", 100)
             self.outputmap(self.costmap, outcostfilename)
 
     def walkeachdirection(self, dirname, travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP):
@@ -149,17 +148,17 @@ class RandomWalk():
         count = 0
         for i in range(repeattimes): # try the converge times=repeattimes
             print dirname, i, "#####################################################################################"
-            self.dirlist = self.getdirlist(dirname, dirP, dirnearP, dirsideP, diropP)
+            self.dirlist = self.getdirlist_lessdir(dirname, dirP, dirnearP, dirsideP, diropP)
             self.move2hrs()
             if FASTNOLOG == 0:
-                outcostfilename = self.outfilename(travelcostpath, travelcostmap, dirname, i)
+                outcostfilename = outfilename(travelcostpath, travelcostmap, dirname, i)
                 self.outputmap(self.costmap, outcostfilename)
 
-    def outfilename(self, path, fname, dirname, count):
-        """Modify filename "file.txt" to be "cell0_0/file_0_0_SE1.txt" for starting cell (0,0) on the first 2hrs run.
-        """
-        return path + "/cell" + "_" + str(self.cellx) + "_" + str(self.celly) + "/" + fname[:-4]\
-                             + "_" + str(self.cellx) +"_" + str(self.celly) + "_" +dirname + str(count) + ".txt"
+    # def outfilename(self, path, fname, dirname, count):
+    #     """Modify filename "file.txt" to be "cell0_0/file_0_0_SE1.txt" for starting cell (0,0) on the first 2hrs run.
+    #     """
+    #     return path + "/cell" + "_" + str(self.cellx) + "_" + str(self.celly) + "/" + fname[:-4]\
+    #                          + "_" + str(self.cellx) +"_" + str(self.celly) + "_" +dirname + str(count) + ".txt"
 
     def getdirlist(self, dirname, dirP, dirnearP, dirsideP, diropP):
         """ @input: dirname:  a direction name string
@@ -196,6 +195,56 @@ class RandomWalk():
         #      [ N       S     W      E      NW     NE     SW     SE  ]
     #   print  [pl[0], pl[4], pl[6], pl[2], pl[7], pl[1], pl[5], pl[3]]  
         return [pl[0], pl[4], pl[6], pl[2], pl[7], pl[1], pl[5], pl[3]]
+
+    def getdirlist_lessdir(self, dirname, dirP, dirnearP, dirsideP, diropP):
+        """ @input: dirname:  a direction name string
+                    dirP:     possiblity to move to the selected direction 
+                    dirnearP: possiblity to move to two directions near the selected
+                    dirsideP: possiblity to move to two directions of 90 degrees to the selected
+                    diropP:   possiblity to move to three other directions
+            @return a list of possiblity distribution in the order of [N, S, W, E, NW, NE, SW, SE]
+        """
+        # choose 1 from 3 most important directions to have probability dirnearP
+        # and the other two has probabiltiy dirP.
+        dirless = np.random.randint(0,3)
+        if dirless == 0:
+            p0 = dirnearP
+            p1 = p2 = dirP
+        elif dirless == 1:
+            p1 = dirnearP
+            p0 = p2 = dirP
+        else:
+            p2 = dirnearP 
+            p0 = p1 = dirP
+
+        p0 = dirP
+        p1 = dirnearP
+        p2 = dirsideP
+        p3 = diropP
+        
+        if dirname == "N":
+            #                    [ 0   1   2   3   4   5    6   7 ]
+            #                    [ N   NE  E   SE  S   SW   W  NW ]
+            pl =                 [ p0, p1, p2, p3, p3, p3, p2, p1 ]
+        elif dirname == "NE":
+            pl =                 [ p1, p0, p1, p2, p3, p3, p3, p2 ]
+        elif dirname == "E":
+            pl =                 [ p2, p1, p0, p1, p2, p3, p3, p3 ]
+        elif dirname == "SE":
+            pl =                 [ p3, p2, p1, p0, p1, p2, p3, p3 ]
+        elif dirname == "S":
+            pl =                 [ p3, p3, p2, p1, p0, p1, p2, p3 ]
+        elif dirname == "SW":
+            pl =                 [ p3, p3, p3, p2, p1, p0, p1, p2 ]
+        elif dirname == "W":
+            pl =                 [ p2, p3, p3, p3, p2, p1, p0, p1 ]
+        elif dirname == "NW":
+            pl =                 [ p1, p2, p3, p3, p3, p2, p1, p0 ]
+        
+        #      [ N       S     W      E      NW     NE     SW     SE  ]
+    #   print  [pl[0], pl[4], pl[6], pl[2], pl[7], pl[1], pl[5], pl[3]]  
+        return [pl[0], pl[4], pl[6], pl[2], pl[7], pl[1], pl[5], pl[3]]
+        
         
         
     def move2hrs(self):
@@ -333,10 +382,10 @@ class RandomWalk():
         self.travelpathlist.append((self.distN, self.distW, costNew))
         self.visited_dict[cell] = costNew
 
-    def extractheader(self, headermap):
-        with open(headermap, 'r') as h:
-            header = h.read()
-        return header
+    # def extractheader(self, headermap):
+    #     with open(headermap, 'r') as h:
+    #         header = h.read()
+    #     return header
 
     def outputmap(self, matrix, travelcostmap):
         """Copy the header meta information from speedmap, and output travelcost/travelpath matrix to map
@@ -344,10 +393,12 @@ class RandomWalk():
         """
         # if travelcostmap's path directory does not exist, creat the directory.
         createdirectorynotexist(travelcostmap)
-        with open(travelcostmap, 'w') as w:
-            w.writelines(self.outfileheader)
-        matrix.to_csv(path_or_buf=travelcostmap, sep=' ', index=False, header=False, mode = 'a') # append
-            
+        # with open(travelcostmap, 'w') as w:
+        #     w.writelines(self.outfileheader)
+        # matrix.to_csv(path_or_buf=travelcostmap, sep=' ', index=False, header=False, mode = 'a') # append
+        
+        matrix.to_csv(path_or_buf=travelcostmap, sep=' ', 
+                      index=False, header=self.outfileheader, index_label=False)   
         for (x,y) , val in self.visited_dict.iteritems():
             print "(" ,x, ",",y,")",val
 
@@ -365,14 +416,13 @@ def main(argv):
     print disW, disN, weight
 
     # redirect stdout to log file
-    logname = "./Data/costmaps/cell_" + disW + "_" + disN + "/log.txt"
+    logname = TRAVELCOSTPATH+"/cell_" + disW + "_" + disN + "/log.txt"
     createdirectorynotexist(logname)
     sys.stdout = open(logname, 'w')
 
     RandomWalk(int(disW),int(disN)) #distW, distN
     end = time.time()
     print (end-start)
-
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
