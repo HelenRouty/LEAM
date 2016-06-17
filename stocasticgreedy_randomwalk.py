@@ -47,7 +47,7 @@ MAXCOST = 90 #minutes
 MAXMOVE = 1000 #cell                    #if highest speed is 933 meters/min = 34.78 miles.hr = 56 km/hr, 1000*30*sqrt(2)/933 = 45.47min. If 90min, need 2000 steps
 REPEATTIMES = 100
 DIRP = 0.3                              #possibility to go to pre-selected direction, e.g. N
-DIRNEARP = 0.2                          #possibiltiy to go to the two directions near the selected e.g.NW and NE
+DIRNEARP = 0.1                          #possibiltiy to go to the two directions near the selected e.g.NW and NE
 DIRSIDEP = 0.12                         #possibiltiy to go to the two directions at 90 degree difference e.g.W and E
 DIROPP = 1-(DIRP+2*DIRNEARP+2*DIRSIDEP) #possibility to go to the other directions. e.g. S, SW, and SE #this should not be set to 0
 
@@ -136,7 +136,7 @@ class RandomWalk():
         self.walkeachdirection("NW",travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP)
         self.costmap[self.costmap < 20] = 20
         if FASTNOLOG == 1:
-            outcostfilename = outfilename(travelcostpath, travelcostmap, "NW", 100)
+            outcostfilename = outfilename(self.cellx, self.celly, travelcostpath, travelcostmap, "NW", 100)
             self.outputmap(self.costmap, outcostfilename)
 
     def walkeachdirection(self, dirname, travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP):
@@ -149,9 +149,9 @@ class RandomWalk():
         for i in range(repeattimes): # try the converge times=repeattimes
             print dirname, i, "#####################################################################################"
             self.dirlist = self.getdirlist_lessdir(dirname, dirP, dirnearP, dirsideP, diropP)
-            self.move2hrs()
+            self.move2hrs(dirname)
             if FASTNOLOG == 0:
-                outcostfilename = outfilename(travelcostpath, travelcostmap, dirname, i)
+                outcostfilename = outfilename(self.cellx, self.celly, travelcostpath, travelcostmap, dirname, i)
                 self.outputmap(self.costmap, outcostfilename)
 
     # def outfilename(self, path, fname, dirname, count):
@@ -217,29 +217,27 @@ class RandomWalk():
             p2 = dirnearP 
             p0 = p1 = dirP
 
-        p0 = dirP
-        p1 = dirnearP
-        p2 = dirsideP
-        p3 = diropP
+        p3 = dirsideP
+        p4 = diropP
         
         if dirname == "N":
             #                    [ 0   1   2   3   4   5    6   7 ]
             #                    [ N   NE  E   SE  S   SW   W  NW ]
-            pl =                 [ p0, p1, p2, p3, p3, p3, p2, p1 ]
+            pl =                 [ p0, p2, p3, p4, p4, p4, p3, p1 ]
         elif dirname == "NE":
-            pl =                 [ p1, p0, p1, p2, p3, p3, p3, p2 ]
+            pl =                 [ p1, p0, p2, p3, p4, p4, p4, p3 ]
         elif dirname == "E":
-            pl =                 [ p2, p1, p0, p1, p2, p3, p3, p3 ]
+            pl =                 [ p3, p1, p0, p2, p3, p4, p4, p4 ]
         elif dirname == "SE":
-            pl =                 [ p3, p2, p1, p0, p1, p2, p3, p3 ]
+            pl =                 [ p4, p3, p1, p0, p2, p3, p4, p4 ]
         elif dirname == "S":
-            pl =                 [ p3, p3, p2, p1, p0, p1, p2, p3 ]
+            pl =                 [ p4, p4, p3, p1, p0, p2, p3, p4 ]
         elif dirname == "SW":
-            pl =                 [ p3, p3, p3, p2, p1, p0, p1, p2 ]
+            pl =                 [ p4, p4, p4, p3, p1, p0, p2, p3 ]
         elif dirname == "W":
-            pl =                 [ p2, p3, p3, p3, p2, p1, p0, p1 ]
+            pl =                 [ p3, p4, p4, p4, p3, p1, p0, p2 ]
         elif dirname == "NW":
-            pl =                 [ p1, p2, p3, p3, p3, p2, p1, p0 ]
+            pl =                 [ p2, p3, p4, p4, p4, p3, p1, p0 ]
         
         #      [ N       S     W      E      NW     NE     SW     SE  ]
     #   print  [pl[0], pl[4], pl[6], pl[2], pl[7], pl[1], pl[5], pl[3]]  
@@ -247,7 +245,7 @@ class RandomWalk():
         
         
         
-    def move2hrs(self):
+    def move2hrs(self, dirname):
         # reset values
         self.costaccumulated = 0
         print "costaccumulated: ", self.costaccumulated
@@ -263,7 +261,7 @@ class RandomWalk():
             
             if self.costaccumulated < self.maxcost:
                 print "costaccumulated: ", round(self.costaccumulated,2)
-                self.makeonemove()
+                self.makeonemove(dirname)
             else:
                 print "exceed maxcost"
                 print "costaccumulated: ", round(self.costaccumulated,2)
@@ -271,7 +269,7 @@ class RandomWalk():
         print self.travelpathlist
         
                
-    def makeonemove(self):
+    def makeonemove(self, dirname):
         # === fetch current cell data ===
         distN = self.distN                           #distance to top boundary   (steps of moves)
         distS = self.xmax-1-distN                    #distance to bottom boundary  (steps of moves)
@@ -306,7 +304,7 @@ class RandomWalk():
             speedSE = self.dirprobmatrix.iloc[distN+1, distW+1]
              
         print "dirproblist: ", round(speedN,2), round(speedS,2), round(speedW,2), round(speedE,2), \
-                             round(speedNW,2), round(speedNE,2), round(speedSW,2), round(speedSE,2), round(speedC,2)
+                               round(speedNW,2), round(speedNE,2), round(speedSW,2), round(speedSE,2), round(speedC,2)
         
         # === caculate probability list ===
         #direction weight list, the direction has more probabiltiy are assigned a larger weight
@@ -367,7 +365,7 @@ class RandomWalk():
             print "divide by zero"
             
         print "move: ", move, ",distN: ", self.distN, ",distW: ", self.distW, \
-              ",oldspeed: ", round(speedC,2), ", newspeed: ", round(speedCnew,2), ", traveltime: ", traveltime
+            ",oldspeed: ", round(speedC,2), ", newspeed: ", round(speedCnew,2), ", traveltime: ", traveltime
         
         # === update the cost map ===
         #Update the travel time/cost from initial cell to the current cell
@@ -393,12 +391,10 @@ class RandomWalk():
         """
         # if travelcostmap's path directory does not exist, creat the directory.
         createdirectorynotexist(travelcostmap)
-        # with open(travelcostmap, 'w') as w:
-        #     w.writelines(self.outfileheader)
-        # matrix.to_csv(path_or_buf=travelcostmap, sep=' ', index=False, header=False, mode = 'a') # append
-        
-        matrix.to_csv(path_or_buf=travelcostmap, sep=' ', 
-                      index=False, header=self.outfileheader, index_label=False)   
+        with open(travelcostmap, 'w') as w:
+            w.writelines(self.outfileheader)
+        matrix.to_csv(path_or_buf=travelcostmap, sep=' ', index=False, header=False, mode = 'a') # append
+     
         for (x,y) , val in self.visited_dict.iteritems():
             print "(" ,x, ",",y,")",val
 
