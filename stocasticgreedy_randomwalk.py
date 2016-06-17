@@ -285,27 +285,50 @@ class RandomWalk():
         speedNW = speedNE = speedSW = speedSE = 0
         speedC = self.speedmatrix.iloc[distN, distW]
         costC = self.costmap.iloc[distN, distW]
-        if distN != 0:
+
+        # check the current assigned direction. Allows only the current direction
+        # and the two directions nearby to assign real speed. All other directions
+        # are forced to assign a speed of 20.
+        if dirname == 'N':
+            speedS = speedW = speedE = speedSW = speedSE = 20
+        elif dirname == 'S':
+            speedN = speedW = speedE = speedNW = speedNE = 20
+        elif dirname == 'E':
+            speedN = speedS = speedW = speedNW = speedSW = 20
+        elif dirname == 'W':
+            speedN = speedS = speedE = speedNE = speedSE = 20
+        elif dirname == 'NW':
+            speedS = speedE = speedNE = speedSW = speedSE = 20
+        elif dirname == 'NE':
+            speedS = speedW = speedNW = speedSW = speedSE = 20
+        elif dirname == 'SW':
+            speedN = speedE = speedNW = speedNE = speedSE = 20
+        elif dirname == 'SE':
+            speedN = speedE = speedNW = speedNE = speedSW = 20
+
+        if speedN != 20 and distN != 0:
             speedN = self.dirprobmatrix.iloc[distN-1, distW]
-        if distS != 0: 
+        if speedS != 20 and distS != 0: 
             speedS = self.dirprobmatrix.iloc[distN+1, distW]
-        if distW != 0: 
+        if speedW != 20 and distW != 0: 
             speedW = self.dirprobmatrix.iloc[distN, distW-1]
-        if distE != 0: 
+        if speedE != 20 and distE != 0: 
             speedE = self.dirprobmatrix.iloc[distN, distW+1]
             
-        if distN != 0 and distW != 0: 
+        if speedNW != 20 and distN != 0 and distW != 0: 
             speedNW = self.dirprobmatrix.iloc[distN-1, distW-1]
-        if distN != 0 and distE != 0:
+        if speedNE != 20 and distN != 0 and distE != 0:
             speedNE = self.dirprobmatrix.iloc[distN-1, distW+1]
-        if distS != 0 and distW != 0:
+        if speedSW != 20 and distS != 0 and distW != 0:
             speedSW = self.dirprobmatrix.iloc[distN+1, distW-1]
-        if distS != 0 and distE != 0:  
+        if speedSE != 20 and distS != 0 and distE != 0:  
             speedSE = self.dirprobmatrix.iloc[distN+1, distW+1]
              
-        print "dirproblist: ", round(speedN,2), round(speedS,2), round(speedW,2), round(speedE,2), \
+        print "speedproblist: ", round(speedN,2), round(speedS,2), round(speedW,2), round(speedE,2), \
                                round(speedNW,2), round(speedNE,2), round(speedSW,2), round(speedSE,2), round(speedC,2)
         
+
+
         # === caculate probability list ===
         #direction weight list, the direction has more probabiltiy are assigned a larger weight
         weightlist = [speedN*pl[0], speedS*pl[1], speedW*pl[2], speedE*pl[3], \
