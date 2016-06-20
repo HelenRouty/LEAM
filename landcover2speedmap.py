@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 from StringIO import StringIO
 import numpy as np
 import pandas as pd
@@ -91,6 +92,10 @@ class SpeedMap:
         self.roadspeed_matrix = self.cat2speedmap(road_matrix)
         self.finalspeed_matrix = self.overlapspeedmap(self.landcoverspeed_matrix, self.roadspeed_matrix)
         
+
+
+        self.outputspeedmap(self.landcoverspeed_matrix, landcovermap, "./Data/landcoverspeedmap.txt")
+        self.outputspeedmap(self.roadspeed_matrix, landcovermap, "./Data/roadspeedmap.txt")
         self.outputspeedmap(self.finalspeed_matrix, landcovermap, speedmap)
         # pprint(self.landcoverspeed_matrix)
         # pprint(self.roadspeed_matrix)
@@ -117,8 +122,15 @@ class SpeedMap:
     	   @param: matrix is the input map with all catgory values
     	   @output: matrix that has speed values corresponding to the input catgory values.
     	"""
-        # if the catogory is not in the list, define the catgory to be class -1 -- no landuse type
-    	matrix =  matrix.where(matrix.isin(self.cat_list) == True, -1)
+        # if the catogory is not in the list, define the catgory to be np.nan.
+        # print standard error and exit.
+        checknull = matrix.where(matrix.isin(self.cat_list), np.nan)
+
+        if (not pd.notnull(checknull).values.all()):
+            sys.stderr.write("Error: At least one type has no corresponding speed or direction probability assigned.")
+            wrong = matrix.where(matrix.isin(self.cat_list) == False, 0)
+            self.outputspeedmap(wrong, LANDCOVER, "./Data/cat2speed_debug_" +str(ISEMP)+".txt" )
+            exit(1)
         return matrix.replace(to_replace=self.cat_list, value=self.speed_list)
 
     def overlapspeedmap(self, matrix1, matrix2):

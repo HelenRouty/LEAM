@@ -21,3 +21,5 @@ lu_class,speed(meter_per_min)
 81,75
 82,75
 85,75
+91,6
+92,6
