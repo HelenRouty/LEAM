@@ -80,8 +80,7 @@ def roadspeed2class(roadspeedmap, roadspeedchart, roadclassmap, headermap):
     return matrix
 
 class SpeedMap:
-    def __init__(self, landcover_matrix, road_matrix, speedchart, landcovermap=LANDCOVER,\
-    						                          speedmap=SPEEDMAP):
+    def __init__(self, landcover_matrix, road_matrix, speedchart, landcovermap,speedmap):
         self.cat_list = []
         self.speed_list = []
         self.projectioninfo_list = []
@@ -118,8 +117,8 @@ class SpeedMap:
     	   @param: matrix is the input map with all catgory values
     	   @output: matrix that has speed values corresponding to the input catgory values.
     	"""
-        # if the catogory is not in the list, define the catgory to be class 0 -- no landuse type
-    	matrix =  matrix.where(matrix.isin(self.cat_list) == True, 0)
+        # if the catogory is not in the list, define the catgory to be class -1 -- no landuse type
+    	matrix =  matrix.where(matrix.isin(self.cat_list) == True, -1)
         return matrix.replace(to_replace=self.cat_list, value=self.speed_list)
 
     def overlapspeedmap(self, matrix1, matrix2):
@@ -151,7 +150,7 @@ def main():
     #convert road speed map to road class type matrix
     roadclass_matrix = roadspeed2class(ROAD, ROADSPEEDCHART, ROADCLASSMAP, HEADER)
     landcover_matrix = asciiMap2DataFrame(LANDCOVER)
-    speedmap = SpeedMap(landcover_matrix, roadclass_matrix, SPEEDCHART)
+    speedmap = SpeedMap(landcover_matrix, roadclass_matrix, SPEEDCHART, LANDCOVER, SPEEDMAP)
     dirprobmap = SpeedMap(landcover_matrix, roadclass_matrix, DIRPROBCHART, LANDCOVER, DIRPROBMAP)
 
 

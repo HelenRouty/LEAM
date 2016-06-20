@@ -31,6 +31,12 @@ python landcover2speedmap.py
         #and ./Input/speedlist.txt to ./Data directory
         #generate dirprobmap using landuse, chicago_road2 ascii files  
         #and ./Input/possibilitylist.txt to ./Data directory (probability to go which direction) 
+        
+        #Note that we need a default class -1 to have speed -1 in  speedlist and 
+        #possibilitylist for the speed 1 in roadspeedlist (a default useless 
+        #speed that should get rid off).
+        #This is due to the code design ==> take the
+        #maximum of road matrix and landuse matrix.
 python stocasticgreedy_randomwalk.py <vallessthan100> 
         #read either pop centers or emp centers from 
         #./Data/popcenterlist.txt or ./Data/empcenterlist.txt

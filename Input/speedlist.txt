@@ -1,4 +1,5 @@
 lu_class,speed(meter_per_min)
+-1,-1
 0,1
 1,1733
 2,1467
