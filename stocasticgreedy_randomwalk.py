@@ -9,7 +9,7 @@ import time
 from numpy import maximum
 from pandas import DataFrame
 from pprint import pprint
-from Utils import createdirectorynotexist, outfilename, extractheader
+from Utils import createdirectorynotexist, outfilename, extractheader, outputmap
 
 """
 This script will do:
@@ -27,7 +27,6 @@ This script will do:
    ==> about 1hr per map 
 """
 
-FASTNOLOG = 1
 ISEMP = 1
 
 if (ISEMP == 1):
@@ -50,18 +49,6 @@ DIRP = 0.3                              #possibility to go to pre-selected direc
 DIRNEARP = 0.1                          #possibiltiy to go to the two directions near the selected e.g.NW and NE
 DIRSIDEP = 0.12                         #possibiltiy to go to the two directions at 90 degree difference e.g.W and E
 DIROPP = 1-(DIRP+2*DIRNEARP+2*DIRSIDEP) #possibility to go to the other directions. e.g. S, SW, and SE #this should not be set to 0
-
-# def createdirectorynotexist(fname):
-#     """Create a directory if the directory does not exist.
-#        @param: fname is the full file path name
-#        @reference:[http://stackoverflow.com/questions/12517451/python-automatically-creating-directories-with-file-output]
-#     """
-#     if not os.path.exists(os.path.dirname(fname)):
-#         try:
-#             os.makedirs(os.path.dirname(fname))
-#         except OSError as exc: #Guard against race condition
-#             if exc.errno != errno.EEXIST:
-#                 raise
 
 def min(x, y):
     if math.isnan(x):
@@ -135,9 +122,11 @@ class RandomWalk():
         self.walkeachdirection("W",travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP)
         self.walkeachdirection("NW",travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP)
         self.costmap[self.costmap < 20] = 20
-        if FASTNOLOG == 1:
-            outcostfilename = outfilename(self.cellx, self.celly, travelcostpath, travelcostmap, "NW", 100)
-            self.outputmap(self.costmap, outcostfilename)
+        
+        outcostfilename = outfilename(self.cellx, self.celly, travelcostpath, travelcostmap, "NW", 100)
+        outputmap(self.costmap, self.outfileheader, outcostfilename)
+        for (x,y) , val in self.visited_dict.iteritems():
+            print "(" ,x, ",",y,")",val
 
     def walkeachdirection(self, dirname, travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP):
         """Walk in one direction for <repeattimes> times. Each time generate an updated cost map
@@ -150,15 +139,6 @@ class RandomWalk():
             print dirname, i, "#####################################################################################"
             self.dirlist = self.getdirlist_lessdir(dirname, dirP, dirnearP, dirsideP, diropP)
             self.move2hrs(dirname)
-            if FASTNOLOG == 0:
-                outcostfilename = outfilename(self.cellx, self.celly, travelcostpath, travelcostmap, dirname, i)
-                self.outputmap(self.costmap, outcostfilename)
-
-    # def outfilename(self, path, fname, dirname, count):
-    #     """Modify filename "file.txt" to be "cell0_0/file_0_0_SE1.txt" for starting cell (0,0) on the first 2hrs run.
-    #     """
-    #     return path + "/cell" + "_" + str(self.cellx) + "_" + str(self.celly) + "/" + fname[:-4]\
-    #                          + "_" + str(self.cellx) +"_" + str(self.celly) + "_" +dirname + str(count) + ".txt"
 
     def getdirlist(self, dirname, dirP, dirnearP, dirsideP, diropP):
         """ @input: dirname:  a direction name string
@@ -288,7 +268,7 @@ class RandomWalk():
 
         # check the current assigned direction. Allows only the current direction
         # and the two directions nearby to assign real speed. All other directions
-        # are forced to assign a speed of 20.
+        # are forced to assign a speed of 20 if the dirprob>20.
         if dirname == 'N':
             speedS = speedW = speedE = speedSW = speedSE = 20
         elif dirname == 'S':
@@ -306,23 +286,31 @@ class RandomWalk():
         elif dirname == 'SE':
             speedN = speedE = speedNW = speedNE = speedSW = 20
 
-        if speedN != 20 and distN != 0:
-            speedN = self.dirprobmatrix.iloc[distN-1, distW]
-        if speedS != 20 and distS != 0: 
-            speedS = self.dirprobmatrix.iloc[distN+1, distW]
-        if speedW != 20 and distW != 0: 
-            speedW = self.dirprobmatrix.iloc[distN, distW-1]
-        if speedE != 20 and distE != 0: 
-            speedE = self.dirprobmatrix.iloc[distN, distW+1]
+        if distN != 0:
+            dircur = self.dirprobmatrix.iloc[distN-1, distW]
+            speedN = min(20, dircur) if (speedN == 20) else dircur 
+        if distS != 0:
+            dircur = self.dirprobmatrix.iloc[distN+1, distW]
+            speedS = min(20, dircur) if (speedS == 20) else dircur
+        if distW != 0: 
+            dircur = self.dirprobmatrix.iloc[distN, distW-1]
+            speedW = min(20, dircur) if (speedW == 20) else dircur
+        if distE != 0:
+            dircur = self.dirprobmatrix.iloc[distN, distW+1]
+            speedE = min(20, dircur) if (speedE == 20) else dircur
             
-        if speedNW != 20 and distN != 0 and distW != 0: 
-            speedNW = self.dirprobmatrix.iloc[distN-1, distW-1]
-        if speedNE != 20 and distN != 0 and distE != 0:
-            speedNE = self.dirprobmatrix.iloc[distN-1, distW+1]
-        if speedSW != 20 and distS != 0 and distW != 0:
-            speedSW = self.dirprobmatrix.iloc[distN+1, distW-1]
-        if speedSE != 20 and distS != 0 and distE != 0:  
-            speedSE = self.dirprobmatrix.iloc[distN+1, distW+1]
+        if distN != 0 and distW != 0:
+            dircur  = self.dirprobmatrix.iloc[distN-1, distW-1]
+            speedNW = min(20, dircur) if (speedNW == 20) else dircur 
+        if distN != 0 and distE != 0:
+            dircur  = self.dirprobmatrix.iloc[distN-1, distW+1]
+            speedNE = min(20, dircur) if (speedNE == 20) else dircur 
+        if distS != 0 and distW != 0:
+            dircur  = self.dirprobmatrix.iloc[distN+1, distW-1]
+            speedSW = min(20, dircur) if (speedSW == 20) else dircur 
+        if distS != 0 and distE != 0:
+            dircur  =  self.dirprobmatrix.iloc[distN+1, distW+1]
+            speedSE = min(20, dircur) if (speedSE == 20) else dircur 
              
         print "speedproblist: ", round(speedN,2), round(speedS,2), round(speedW,2), round(speedE,2), \
                                round(speedNW,2), round(speedNE,2), round(speedSW,2), round(speedSE,2), round(speedC,2)
@@ -403,23 +391,15 @@ class RandomWalk():
         self.travelpathlist.append((self.distN, self.distW, costNew))
         self.visited_dict[cell] = costNew
 
-    # def extractheader(self, headermap):
-    #     with open(headermap, 'r') as h:
-    #         header = h.read()
-    #     return header
-
-    def outputmap(self, matrix, travelcostmap):
-        """Copy the header meta information from speedmap, and output travelcost/travelpath matrix to map
-           @param: matrix is the matrix to be saved in outputfile, a .txt file.
-        """
-        # if travelcostmap's path directory does not exist, creat the directory.
-        createdirectorynotexist(travelcostmap)
-        with open(travelcostmap, 'w') as w:
-            w.writelines(self.outfileheader)
-        matrix.to_csv(path_or_buf=travelcostmap, sep=' ', index=False, header=False, mode = 'a') # append
-     
-        for (x,y) , val in self.visited_dict.iteritems():
-            print "(" ,x, ",",y,")",val
+    # def outputmap(self, matrix, travelcostmap):
+    #     """Copy the header meta information from speedmap, and output travelcost/travelpath matrix to map
+    #        @param: matrix is the matrix to be saved in outputfile, a .txt file.
+    #     """
+    #     # if travelcostmap's path directory does not exist, creat the directory.
+    #     createdirectorynotexist(travelcostmap)
+    #     with open(travelcostmap, 'w') as w:
+    #         w.writelines(self.outfileheader)
+    #     matrix.to_csv(path_or_buf=travelcostmap, sep=' ', index=False, header=False, mode = 'a') # append
 
 def main(argv):
     start = time.time()

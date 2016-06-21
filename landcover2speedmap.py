@@ -6,6 +6,7 @@ import pandas as pd
 from numpy import maximum
 from pandas import (Series,DataFrame, Panel,)
 from pprint import pprint
+from Utils import extractheader, outputmap
 
 """
 This script does:
@@ -29,6 +30,7 @@ ROAD='./Data/chicago_road2.txt'   #ascii road speed (miles/hour) map
 # output files
 SPEEDMAP="./Data/speedmap.txt"
 DIRPROBMAP="./Data/dirprobmap.txt"
+LANDROADCLASSMAP = "./Data/landroadclassmap.txt"
 
 # mapping files
 DIRPROBCHART = "./Input/possibilitylist.txt"
@@ -80,8 +82,16 @@ def roadspeed2class(roadspeedmap, roadspeedchart, roadclassmap, headermap):
     matrix.to_csv(path_or_buf=roadclassmap, sep=' ', index=False, header=False, mode = 'a') # append
     return matrix
 
+def genlandroadclassmap(roadclassmap, landclassmap, header):
+    # make the default class value to be a large number and then take
+    # the minimum value of the maps.
+    roadclassmap = roadclassmap.replace(to_replace=-1, value=999) 
+    landroadclassmap = np.minimum(roadclassmap, landclassmap)
+    
+    outputmap(landroadclassmap, header, LANDROADCLASSMAP)
+
 class SpeedMap:
-    def __init__(self, landcover_matrix, road_matrix, speedchart, landcovermap,speedmap):
+    def __init__(self, landcover_matrix, road_matrix, speedchart, speedmap, header):
         self.cat_list = []
         self.speed_list = []
         self.projectioninfo_list = []
@@ -92,14 +102,10 @@ class SpeedMap:
         self.roadspeed_matrix = self.cat2speedmap(road_matrix)
         self.finalspeed_matrix = self.overlapspeedmap(self.landcoverspeed_matrix, self.roadspeed_matrix)
         
-
-
-        self.outputspeedmap(self.landcoverspeed_matrix, landcovermap, "./Data/landcoverspeedmap.txt")
-        self.outputspeedmap(self.roadspeed_matrix, landcovermap, "./Data/roadspeedmap.txt")
-        self.outputspeedmap(self.finalspeed_matrix, landcovermap, speedmap)
-        # pprint(self.landcoverspeed_matrix)
-        # pprint(self.roadspeed_matrix)
-        # pprint(self.finalspeed_matrix)
+        #self.landcoverspeed_matrix = self.landcoverspeed_matrix.apply(np.sqrt)
+        outputmap(self.landcoverspeed_matrix, header, "./Data/landcoverspeedmap.txt")
+        outputmap(self.roadspeed_matrix, header, "./Data/roadspeedmap.txt")
+        outputmap(self.finalspeed_matrix, header, speedmap)
     
     def speedchart2dict(self, speedchart):
     	"""Read the speedchart text file and convert it to be a catogory list and its corresponding
@@ -140,30 +146,24 @@ class SpeedMap:
     	"""
     	return np.maximum(matrix1, matrix2)
 
-    def outputspeedmap(self, matrix, landcovermap, speedmap):
-        """Copy the header meta information from Landcover map, and output speed matrix to speedmap
-           @param: matrix is the matrix to be saved in speedmap txt file.
-        """
-        with open(landcovermap, 'r') as r:
-            lines = r.readlines()
-            lines = [l for l in lines[:6]] # 6 is the number of header rows
-            with open(speedmap, 'w') as w:
-                w.writelines(lines)
-        #matrix = matrix.apply(np.sqrt)
-        matrix.to_csv(path_or_buf=speedmap, sep=' ', index=False, header=False, mode = 'a') # append
-
-
     def printdict(self, dict):
 		for key, value in dict.iteritems():
 			print str(key) + ":"+ str(value)
         
         
 def main():
+    
     #convert road speed map to road class type matrix
     roadclass_matrix = roadspeed2class(ROAD, ROADSPEEDCHART, ROADCLASSMAP, HEADER)
     landcover_matrix = asciiMap2DataFrame(LANDCOVER)
-    speedmap = SpeedMap(landcover_matrix, roadclass_matrix, SPEEDCHART, LANDCOVER, SPEEDMAP)
-    dirprobmap = SpeedMap(landcover_matrix, roadclass_matrix, DIRPROBCHART, LANDCOVER, DIRPROBMAP)
+
+    # generate landroadclassmap
+    header= extractheader(HEADER)
+    genlandroadclassmap(roadclass_matrix, landcover_matrix, header)
+
+    # generate speedmap and dirprobmap
+    speedmap = SpeedMap(landcover_matrix, roadclass_matrix, SPEEDCHART, SPEEDMAP, header)
+    dirprobmap = SpeedMap(landcover_matrix, roadclass_matrix, DIRPROBCHART, DIRPROBMAP, header)
 
 
 if __name__ == "__main__":

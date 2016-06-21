@@ -22,3 +22,13 @@ def outfilename(cellx, celly, path, fname, dirname, count):
     """
     return path + "/cell" + "_" + str(cellx) + "_" + str(celly) + "/" + fname[:-4] \
                          + "_" + str(cellx) +"_" + str(celly) + "_" +dirname + str(count) + ".txt"
+
+def outputmap(matrix, header, outfile):
+    """Copy the header meta information, and output tge matrix as a map to outfile.
+       @param: matrix is the matrix to be saved in outputfile, a .txt file.
+    """
+    # if travelcostmap's path directory does not exist, creat the directory.
+    createdirectorynotexist(outfile)
+    with open(outfile, 'w') as w:
+        w.writelines(header)
+    matrix.to_csv(path_or_buf=outfile, sep=' ', index=False, header=False, mode = 'a') #append
