@@ -48,7 +48,7 @@ REPEATTIMES = 100
 DIRP = 0.6                              #total possibility to go to two pre-selected direction, e.g. N
 DIRNEARP = 0.1                          #possibiltiy to go to the two directions near the selected e.g.NW and NE
 DIRSIDEP = 0.12                         #possibiltiy to go to the two directions at 90 degree difference e.g.W and E
-DIROPP = 1-(DIRP+2*DIRNEARP+2*DIRSIDEP) #possibility to go to the other directions. e.g. S, SW, and SE #this should not be set to 0
+DIROPP = 1-(DIRP+DIRNEARP+2*DIRSIDEP)   #possibility to go to the other directions. e.g. S, SW, and SE #this should not be set to 0
 
 def min(x, y):
     if math.isnan(x):
