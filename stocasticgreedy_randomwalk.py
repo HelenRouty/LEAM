@@ -189,7 +189,7 @@ class RandomWalk():
         # and the other dirP-dirP1.
         dirless = np.random.randint(0,3)
         dirP1   = np.random.random()*dirP
-        dirP2   = dirP - np.random.random()*dirP
+        dirP2   = dirP - dirP1
 
         if dirless == 0:
             p0 = dirnearP
