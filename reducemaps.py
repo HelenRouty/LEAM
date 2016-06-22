@@ -30,7 +30,7 @@ if ISEMP == 1:
     ATTRACTIVEMAP = "./Data/attrmap-emp.txt"
 else:
     CENTERLIST = "./Data/popcenterlist.txt"
-    TRAVELCOSTPATH = "./Data/costmaps"
+    TRAVELCOSTPATH = "./Data/costmaps-pop"
     ATTRACTIVEMAP = "./Data/attrmap-pop.txt"
 
 SPEEDMAP = "./Data/speedmap.txt"

@@ -12,7 +12,7 @@ Time consumption for 64 threads and 2 repeattime: 24min
 Time consumption for 32 threads and 2 repeattime: 23min
 Time consumption for no thread  and 1 repeattime with landuse type considered: 4min!!!
 """
-ISEMP = 0
+ISEMP = 1
 REPEATNUM = 5
 # INPUT="testmap2"
 # OUTPUT="testmapout"
@@ -21,7 +21,7 @@ if ISEMP == 0:
     INPUT="./Data/costmap-pop.txt"
     OUTPUT="./Data/costmap-pop-interpolated.txt"
     CENTERLIST = "./Data/popcenterlist.txt"
-    TRAVELCOSTPATH = "./Data/costmaps"
+    TRAVELCOSTPATH = "./Data/costmaps-pop"
     TRCOSTMAP = "./Data/costmap-pop.txt"
 else:
     INPUT="./Data/costmap-emp.txt"
@@ -148,8 +148,8 @@ def main():
     header = extractheader(HEADER)
     speed_df = pd.read_csv(SPEEDMAP, sep=' ', skiprows=6, header=None, dtype=np.int)
 
-    # (nrows, ncols) = speed_df.shape
-    # travelcostmap  = gettravelcostmap(nrows, ncols, header)
+    (nrows, ncols) = speed_df.shape
+    travelcostmap  = gettravelcostmap(nrows, ncols, header)
     
     costmap_df = pd.read_csv(INPUT, sep=' ', skiprows=6, header=None, dtype=np.float)
     costmap = np.asarray(costmap_df).round()

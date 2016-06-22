@@ -15,7 +15,7 @@ Time consumption for no thread  and 1 repeattime with landuse type considered: 4
 
 #INPUT="testmap1"
 #OUTPUT="testmapout"
-ISEMP = 0
+ISEMP = 1
 if ISEMP == 0:
     INPUT="./Data/attrmap-pop.txt"
     OUTPUT="./Data/attrmap-pop-interpolated.txt"
