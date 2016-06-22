@@ -398,16 +398,6 @@ class RandomWalk():
         self.travelpathlist.append((self.distN, self.distW, costNew))
         self.visited_dict[cell] = costNew
 
-    # def outputmap(self, matrix, travelcostmap):
-    #     """Copy the header meta information from speedmap, and output travelcost/travelpath matrix to map
-    #        @param: matrix is the matrix to be saved in outputfile, a .txt file.
-    #     """
-    #     # if travelcostmap's path directory does not exist, creat the directory.
-    #     createdirectorynotexist(travelcostmap)
-    #     with open(travelcostmap, 'w') as w:
-    #         w.writelines(self.outfileheader)
-    #     matrix.to_csv(path_or_buf=travelcostmap, sep=' ', index=False, header=False, mode = 'a') # append
-
 def main(argv):
     start = time.time()
     cellnum = int(sys.argv[1])

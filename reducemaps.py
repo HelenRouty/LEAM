@@ -79,8 +79,7 @@ def main():
         end = time.time()
         print "done map using time: "
         print (end-start)
-   
-    #attrmap.replace([np.inf, -np.inf], np.nan) 
+
     #normalizer = np.matrix(attrmap).max()
     #attrmap /= normalizer
     attrmap.round() # round to integer
