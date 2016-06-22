@@ -4,6 +4,9 @@ import sys
 sys.path += ['./bin']
 from glob import iglob
 import time
+from Utils import extractheader
+
+GRASSHEADER="./Input/grassheader.txt"
 # import subprocess
 # from subprocess import check_call
 
@@ -101,7 +104,12 @@ def export_asciimapnull1(layername):
     #     raise RuntimeError('unable to export tiff map ' + layername)    
 
 def ascii2raster(layername):
-    filename = 'Data/' + layername + '.txt'
+    filename = './Data/' + layername + '.txt'
+    grassheader = extractheader(GRASSHEADER)
+    os.system('sed -i -e "1,6d" '+ filename) #delete first 6 lines
+    lines = grassheader.rstrip().split('\n') #insert header line by line
+    for line in reversed(lines):
+        os.system("sed -i 1i\ '" + line+"' " +filename) #insert header to the 1st line
     if grass.run_command('r.in.ascii', input=filename, output=layername):
         raise RuntimeError('unable to read ascii map to raster map ' + layername )
 
@@ -125,8 +133,6 @@ def exportraster(layername):
     if grass.run_command('r.out.gdal', input=layername, output=outfilename, type='UInt16'):
         raise RuntimeError('unable to export raster map ' + layername )
 
-
-
 def main():
     grass_config('grass', 'model')
 
@@ -134,7 +140,7 @@ def main():
     ROADMAP = 'chicago_road2'
     POPCENTERMAP = 'pop_center'
     EMPCENTERMAP = 'emp_centers5'
-    VISIALMAP = 'attrmap_pop'
+    VISIALMAP = 'attrmap-emp-interpolated'
     CONTOURMAP = 'attrmap_pop_contour'
 
     # # transform raster landuse to ascii map
@@ -157,13 +163,14 @@ def main():
     # export_asciimap(EMPCENTERMAP)
 
     # visualize an ascii map to rastermap
-    #ascii2raster(VISIALMAP)
-    start = time.time()
+    ascii2raster(VISIALMAP)
+    exportraster(VISIALMAP)
+    #start = time.time()
     #gencontour(VISIALMAP, CONTOURMAP)
-    vector2rastercat(CONTOURMAP)
-    print "time to convert raster: ", (time.time()-start)
-    exportraster(CONTOURMAP)
-    print "time to export raster: ", (time.time()-start)
+    #vector2rastercat(CONTOURMAP)
+    #print "time to convert raster: ", (time.time()-start)
+    #exportraster(CONTOURMAP)
+    #print "time to export raster: ", (time.time()-start)
 
 
 if __name__ == "__main__":

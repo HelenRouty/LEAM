@@ -11,7 +11,7 @@ from pprint import pprint
 import multiprocessing
 import thread
 
-from Utils import extractheader, outfilename
+from Utils import extractheader, outfilename, outputmap
 
 """
 This script will do:
@@ -22,7 +22,7 @@ This script will do:
 Time consumption: 4min
 """
 
-ISEMP = 0
+ISEMP = 1
 
 if ISEMP == 1:
     CENTERLIST = "./Data/empcenterlist.txt"
@@ -36,31 +36,23 @@ else:
 SPEEDMAP = "./Data/speedmap.txt"
 TRAVELCOSTMAP = "travelcostmap.txt"
 HEADER = "./Input/arcGISheader.txt"
+ATTRBASE = 20
 
-
-# def outfilename(cellx, celly, path, fname, dirname, count):
-#     """Modify filename "file.txt" to be "cell0_0/Data/file_0_0_SE1.txt" for starting cell (0,0) on the first 2hrs run.
-#     """
-#     return path + "/cell" + "_" + str(cellx) + "_" + str(celly) + "/" + fname[:-4] \
-#                          + "_" + str(cellx) +"_" + str(celly) + "_" +dirname + str(count) + ".txt"
                         
 def costmap2attrmap(costmap):
     try:
         costmatrix = pd.read_csv(costmap, skiprows=6, header=None, sep=r"\s+" ) #skip the 6 header lines
-        costmatrix.replace(to_replace=0.0, value=0.001)
+        #costmatrix.replace(to_replace=0.0, value=0.001)
     except IOError as e:
         raise e
         return costmatrix
 
-    attmatrix = 1/costmatrix
+    # add a base attractiveness to every cell to avoid the attractivenss
+    # to go infinite when cost goes to zero
+    attmatrix = 1/(costmatrix + ATTRBASE)
     #pprint(attmatrix)
     return attmatrix
 
-# def extractheader(header):
-#     with open(header, 'r') as h:
-#         header = h.read()
-#     return header
-    
 def main():
     speedmap = pd.read_csv(SPEEDMAP, skiprows=6, header=None, sep=r"\s+")
     header = extractheader(HEADER)
@@ -91,10 +83,8 @@ def main():
     #attrmap.replace([np.inf, -np.inf], np.nan) 
     #normalizer = np.matrix(attrmap).max()
     #attrmap /= normalizer
-    with open(ATTRACTIVEMAP, 'w') as w:
-        w.writelines(header)
     attrmap.round() # round to integer
-    attrmap.to_csv(path_or_buf=ATTRACTIVEMAP, sep=' ', index=False, header=False, mode = 'a') # append
+    outputmap(attrmap, header, ATTRACTIVEMAP)
 
 if __name__ == "__main__":
     main()

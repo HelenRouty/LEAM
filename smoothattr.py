@@ -31,11 +31,6 @@ DIRPROBMAX = 200
 REPEATNUM = 5
 
 
-# def extractheader(headermap):
-#     with open(headermap, 'r') as h:
-#         header = h.read()
-#     return header
-#global value header
 header = extractheader(HEADER)
 
 class SmoothAttr():
@@ -101,7 +96,7 @@ class SmoothAttr():
             self.matrix = np.maximum(self.smoothedmap, self.matrix)
         self.smoothedmap = self.matrix
 
-def outputmap(attrmap, header, output):
+def outputmap_np(attrmap, header, output):
     with open(output, 'w') as f:
         f.writelines(header)
         np.savetxt(f, attrmap, fmt='%d',delimiter=' ')
@@ -114,7 +109,7 @@ def main():
     
     smoothcost = SmoothAttr(attrmap, weightarray, dirprob_df)
     attrmap = smoothcost.smoothedmap
-    outputmap(attrmap, header, OUTPUT)
+    outputmap_np(attrmap, header, OUTPUT)
 
 if __name__ == "__main__":
 	main()

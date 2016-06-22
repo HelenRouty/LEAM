@@ -22,11 +22,17 @@ from optparse import OptionParser
 from Utils import createdirectorynotexist, extractheader, outfilename
 import time 
 
-LANDUSEMAP = "./Data/landuse.txt"
+if (len(sys.argv) < 3):
+    print "Error: You need to specify at least two arguments: #attrmap baskets and #costmap baskets."
+    exit(1)
+
+
+LANDROADCLASSMAP = "./Data/landroadclassmap.txt"
 RESIDENTIALMIN = 21
 RESIDENTIALMAX = 22
-COMMERCIALMIN =  23
-COMMERCIALMAX = 24
+COMMERCIALMIN  = 23
+COMMERCIALMAX  = 24
+ROADCLASSMAX   = 6
 ATTRBASKETNUM = int(sys.argv[1])
 COSTBASKETNUM = int(sys.argv[1])
 ATTRBASE = 3817
@@ -38,7 +44,7 @@ ATT = "Attractiveness"
 CST = "Travelcost"
 
 # for gettravelcostmap
-ISEMP = 0
+ISEMP = 1
 if ISEMP == 1:
     CENTERLIST = "./Data/empcenterlist.txt"
     ATTRMAP = "./Data/attrmap-emp-interpolated.txt"
@@ -186,18 +192,18 @@ def frequencyanalysis_cost(cost_res_arr, cost_arr, cost_arr_x, RESCOM, COSTFREQ,
 
 
 def main():
-    landusemap     = pd.read_csv(LANDUSEMAP, sep=r"\s+", skiprows=6, header=None)
-    attrmap        = pd.read_csv(ATTRMAP, sep=r"\s+", skiprows=6, header=None)
+    landroadclassmap = pd.read_csv(LANDROADCLASSMAP, sep=r"\s+", skiprows=6, header=None)
+    attrmap          = pd.read_csv(ATTRMAP, sep=r"\s+", skiprows=6, header=None)
 
-    parser = OptionParser()
-    parser.add_option("-g", "--gentravelcost", default=False, action="store_true",
-        help="generate travelcostmap by overlapping 100 maps. pop/emp needs to be speicified in this source code.")
-    (options, args) = parser.parse_args()
-    if options.gentravelcost:
-        print "generate travelcostmap..."
-        (nrows, ncols) = landusemap.shape
-        travelcostmap  = gettravelcostmap(nrows, ncols)
-        print "finish generating travelcostmap."
+    # parser = OptionParser()
+    # parser.add_option("-g", "--gentravelcost", default=False, action="store_true",
+    #     help="generate travelcostmap by overlapping 100 maps. pop/emp needs to be speicified in this source code.")
+    # (options, args) = parser.parse_args()
+    # if options.gentravelcost:
+    #     print "generate travelcostmap..."
+    #     (nrows, ncols) = landusemap.shape
+    #     travelcostmap  = gettravelcostmap(nrows, ncols)
+    #     print "finish generating travelcostmap."
 
     start = time.time()
 
@@ -208,16 +214,19 @@ def main():
         print "Error: No travelcostmap found. You need to use run smoothcost.py to genearte travelcostmap."
         exit(1)
     
-    landuse_arr    = landusemap.values.flatten()
-    mask_res       = (landuse_arr >= RESIDENTIALMIN)& (landuse_arr <= RESIDENTIALMAX)
-    mask_com       = (landuse_arr >= COMMERCIALMIN) & (landuse_arr <= COMMERCIALMAX)
+    landroad_arr   = landroadclassmap.values.flatten()
+    mask_noroad    = (landroad_arr > ROADCLASSMAX)
+    mask_res       = (landroad_arr > ROADCLASSMAX) & (landroad_arr >= RESIDENTIALMIN)& (landroad_arr <= RESIDENTIALMAX)
+    mask_com       = (landroad_arr > ROADCLASSMAX) & (landroad_arr >= COMMERCIALMIN) & (landroad_arr <= COMMERCIALMAX)
 
-    attr_arr       = attrmap.values.flatten()
-    attr_res_arr   = attr_arr[mask_res]
-    attr_com_arr   = attr_arr[mask_com]
-    cost_arr       = travelcostmap.values.flatten()
-    cost_res_arr   = cost_arr[mask_res]
-    cost_com_arr   = cost_arr[mask_com]
+    attr_arr_org   = attrmap.values.flatten()
+    attr_arr       = attr_arr_org[mask_noroad]
+    attr_res_arr   = attr_arr_org[mask_res]
+    attr_com_arr   = attr_arr_org[mask_com]
+    cost_arr_org   = travelcostmap.values.flatten()
+    cost_arr       = cost_arr_org[mask_noroad]
+    cost_res_arr   = cost_arr_org[mask_res]
+    cost_com_arr   = cost_arr_org[mask_com]
 
 
     # find one x axis (quantile or equal interval) for attr_arr, attr_res_arr, attr_com_arr

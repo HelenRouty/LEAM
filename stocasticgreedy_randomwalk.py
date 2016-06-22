@@ -45,7 +45,7 @@ CELLSIZE = 30 #meters
 MAXCOST = 90 #minutes
 MAXMOVE = 1000 #cell                    #if highest speed is 933 meters/min = 34.78 miles.hr = 56 km/hr, 1000*30*sqrt(2)/933 = 45.47min. If 90min, need 2000 steps
 REPEATTIMES = 100
-DIRP = 0.3                              #possibility to go to pre-selected direction, e.g. N
+DIRP = 0.6                              #total possibility to go to two pre-selected direction, e.g. N
 DIRNEARP = 0.1                          #possibiltiy to go to the two directions near the selected e.g.NW and NE
 DIRSIDEP = 0.12                         #possibiltiy to go to the two directions at 90 degree difference e.g.W and E
 DIROPP = 1-(DIRP+2*DIRNEARP+2*DIRSIDEP) #possibility to go to the other directions. e.g. S, SW, and SE #this should not be set to 0
@@ -121,7 +121,7 @@ class RandomWalk():
         self.walkeachdirection("SW",travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP)
         self.walkeachdirection("W",travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP)
         self.walkeachdirection("NW",travelcostpath, travelcostmap, repeattimes, dirP, dirnearP, dirsideP, diropP)
-        self.costmap[self.costmap < 20] = 20
+        #self.costmap[self.costmap < 20] = 20
         
         outcostfilename = outfilename(self.cellx, self.celly, travelcostpath, travelcostmap, "NW", 100)
         outputmap(self.costmap, self.outfileheader, outcostfilename)
@@ -185,17 +185,24 @@ class RandomWalk():
             @return a list of possiblity distribution in the order of [N, S, W, E, NW, NE, SW, SE]
         """
         # choose 1 from 3 most important directions to have probability dirnearP
-        # and the other two has probabiltiy dirP.
+        # and the other two has probabiltiy randomly chosen from 0 to dirP: dirP1
+        # and the other dirP-dirP1.
         dirless = np.random.randint(0,3)
+        dirP1   = np.random.random()*dirP
+        dirP2   = dirP - np.random.random()*dirP
+
         if dirless == 0:
             p0 = dirnearP
-            p1 = p2 = dirP
+            p1 = dirP1
+            p2 = dirP2
         elif dirless == 1:
             p1 = dirnearP
-            p0 = p2 = dirP
+            p0 = dirP1
+            p2 = dirP2
         else:
             p2 = dirnearP 
-            p0 = p1 = dirP
+            p0 = dirP1
+            p1 = dirP2
 
         p3 = dirsideP
         p4 = diropP
